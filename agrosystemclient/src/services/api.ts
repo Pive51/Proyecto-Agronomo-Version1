@@ -1,12 +1,15 @@
 import axios from 'axios';
-
 import type {
     RegistrarCompraRequest,
     AgregarDetalleCompraRequest,
     RecibirLoteRequest
 } from '../interfaces/ICompra';
-
-
+import type { LoteProximoVencer, StockBajo } from '../interfaces/IAlerta';
+import type {
+    CompraHistorial, DetalleCompraHistorial,
+    VentaHistorial, DetalleVentaHistorial
+} from '../interfaces/IHistorial';
+import type { MermaLote, UtilidadProducto } from '../interfaces/IReporte';
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL
@@ -16,8 +19,6 @@ const api = axios.create({
         'Content-Type': 'application/json'
     }
 });
-
-
 
 // Interceptor: agrega el token JWT en cada petición
 api.interceptors.request.use((config) => {
@@ -49,8 +50,6 @@ export const finalizarCompra = async (compraId: number) => {
     return res.data;
 };
 
-import type { LoteProximoVencer, StockBajo } from '../interfaces/IAlerta';
-
 // ---------- Alertas ----------
 export const getLotesProximosAVencer = async (dias: number = 30) => {
     const res = await api.get<{ success: boolean; mensaje?: string; data: LoteProximoVencer[] }>(
@@ -65,10 +64,6 @@ export const getStockBajo = async () => {
     );
     return res.data;
 };
-import type {
-    CompraHistorial, DetalleCompraHistorial,
-    VentaHistorial, DetalleVentaHistorial
-} from '../interfaces/IHistorial';
 
 // ---------- Historial ----------
 export const getHistorialCompras = async (fechaDesde?: string, fechaHasta?: string) => {
@@ -110,8 +105,8 @@ export const getDetalleVenta = async (idVenta: number) => {
     );
     return res.data;
 };
-import type { MermaLote, UtilidadProducto } from '../interfaces/IReporte';
 
+// ---------- Reportes ----------
 export const getReporteMermas = async (fechaDesde?: string, fechaHasta?: string) => {
     const params = new URLSearchParams();
     if (fechaDesde) params.append('fechaDesde', fechaDesde);
@@ -131,6 +126,7 @@ export const getReporteUtilidad = async (fechaDesde?: string, fechaHasta?: strin
     );
     return res.data;
 };
+
 export const getReporteVentasPeriodo = async (fechaDesde?: string, fechaHasta?: string, formaPago?: string) => {
     const res = await api.get('Reportes/VentasPorPeriodo', {
         params: { fechaDesde, fechaHasta, formaPago }
@@ -145,8 +141,4 @@ export const getReporteProductosMasVendidos = async (fechaDesde?: string, fechaH
     return res.data;
 };
 
-
-
 export default api;
-
-
