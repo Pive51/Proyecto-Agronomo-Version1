@@ -12,6 +12,9 @@ WORKDIR /app
 
 COPY --from=build /app/publish .
 
+# Crear la carpeta que está pidiendo .NET al iniciar
+RUN mkdir -p /app/Imagenes
+
 ENV ASPNETCORE_URLS=http://+:10000
 
 EXPOSE 10000
