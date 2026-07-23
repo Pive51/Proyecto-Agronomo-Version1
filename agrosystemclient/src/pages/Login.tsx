@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import api from '../services/api';
 import { LuEye, LuEyeOff, LuLeaf, LuTriangleAlert } from 'react-icons/lu';
 import '../App.css';
-import './LoginPage.css';
+import './Loginpage.css';
 import { useNavigate } from "react-router-dom";
 import logoAgroVerde from "../assets/logo-agroverde.png";
 
