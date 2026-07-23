@@ -10,6 +10,7 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configuración de JWT Key
 var jwtKet = builder.Configuration["Jwt:Key"];
 var keyBytes = Encoding.UTF8.GetBytes(jwtKet!);
 
@@ -22,22 +23,21 @@ builder.Services.AddOpenApi(options =>
     options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
 });
 
+// ==========================================
+// 🔓 CONFIGURACIÓN DE CORS (PERMISIVA)
+// ==========================================
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReact", policy =>
     {
-        policy.WithOrigins(
-                "http://localhost:61517",
-                "http://localhost:5173",
-                "http://localhost:3000",
-                "https://*.onrender.com" // Permite solicitudes desde tus subdominios en Render
-            )
-            .AllowAnyMethod()
-            .AllowAnyHeader()
-            .AllowCredentials();
+        policy.SetIsOriginAllowed(origin => true) // Permite localhost, Render, Swagger, etc.
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
     });
 });
 
+// Configuración de Autenticación JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(option =>
     {
@@ -57,31 +57,30 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+// Inicializar conexión a base de datos
 ClsConexion.Inicializar(app.Configuration);
 
 // ==========================================
-// 💡 HABILITADO PARA TODOS LOS ENTORNOS (Dev y Prod)
+// 🚀 SWAGGER / OPENAPI EN PRODUCCIÓN
 // ==========================================
-app.MapOpenApi();
+app.MapOpenApi(); // Genera el JSON en /openapi/v1.json
+
 app.UseSwaggerUI(options =>
 {
     options.SwaggerEndpoint("/openapi/v1.json", "AgroSystemServer v1");
-    options.RoutePrefix = "swagger"; // La documentación abrirá en /swagger
+    options.RoutePrefix = string.Empty; // Swagger abrirá directamente en la URL raíz https://agrosystemv1.onrender.com/
 });
 
-// Endpoint raíz de comprobación (Health Check) para evitar el 404 al entrar a la URL base
-app.MapGet("/", () => Results.Ok(new 
-{ 
-    status = "AgroSystem Server API Activa 🚀", 
-    timestamp = DateTime.UtcNow 
-}));
+// ==========================================
+// 🌐 MIDDLEWARES Y RUTAS
+// ==========================================
+// CORS debe ir ANTES de la redirección HTTPS y de la autenticación
+app.UseCors("AllowReact");
 
 app.UseHttpsRedirection();
 
-app.UseCors("AllowReact");
-
 // ==========================================
-// 💡 CONFIGURACIÓN PARA SERVIR LAS IMÁGENES
+// 📂 CONFIGURACIÓN DE CARPETA DE IMÁGENES
 // ==========================================
 var imagenesPath = Path.Combine(builder.Environment.ContentRootPath, "Imagenes");
 if (!Directory.Exists(imagenesPath))
@@ -96,8 +95,10 @@ app.UseStaticFiles(new StaticFileOptions
     FileProvider = new PhysicalFileProvider(imagenesPath),
     RequestPath = "/Imagenes"
 });
-// ==========================================
 
+// ==========================================
+// 🔐 AUTENTICACIÓN Y CONTROLADORES
+// ==========================================
 app.UseAuthentication();
 app.UseAuthorization();
 
