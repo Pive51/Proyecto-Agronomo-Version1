@@ -1,16 +1,23 @@
 import axios from 'axios';
+
 import type {
     RegistrarCompraRequest,
     AgregarDetalleCompraRequest,
     RecibirLoteRequest
 } from '../interfaces/ICompra';
 
+
+
 const api = axios.create({
-    baseURL: 'https://localhost:7145/api',
+    baseURL: import.meta.env.VITE_API_BASE_URL
+        ? `${import.meta.env.VITE_API_BASE_URL}/api`
+        : 'https://localhost:7145/api',
     headers: {
         'Content-Type': 'application/json'
     }
 });
+
+export default api;
 
 // Interceptor: agrega el token JWT en cada petición
 api.interceptors.request.use((config) => {
