@@ -3,7 +3,7 @@ using AgroSystemServer.Data;
 using AgroSystemServer.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.OpenApi;
-using Microsoft.Extensions.FileProviders; // 💡 Asegúrate de tener este using para la carpeta física
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using System.Text;
@@ -29,10 +29,12 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(
                 "http://localhost:61517",
                 "http://localhost:5173",
-                "http://localhost:3000"
+                "http://localhost:3000",
+                "https://*.onrender.com" // Permite solicitudes desde tus subdominios en Render
             )
             .AllowAnyMethod()
-            .AllowAnyHeader();
+            .AllowAnyHeader()
+            .AllowCredentials();
     });
 });
 
@@ -57,14 +59,22 @@ var app = builder.Build();
 
 ClsConexion.Inicializar(app.Configuration);
 
-if (app.Environment.IsDevelopment())
+// ==========================================
+// 💡 HABILITADO PARA TODOS LOS ENTORNOS (Dev y Prod)
+// ==========================================
+app.MapOpenApi();
+app.UseSwaggerUI(options =>
 {
-    app.MapOpenApi();
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/openapi/v1.json", "AgroSystemServer v1");
-    });
-}
+    options.SwaggerEndpoint("/openapi/v1.json", "AgroSystemServer v1");
+    options.RoutePrefix = "swagger"; // La documentación abrirá en /swagger
+});
+
+// Endpoint raíz de comprobación (Health Check) para evitar el 404 al entrar a la URL base
+app.MapGet("/", () => Results.Ok(new 
+{ 
+    status = "AgroSystem Server API Activa 🚀", 
+    timestamp = DateTime.UtcNow 
+}));
 
 app.UseHttpsRedirection();
 
@@ -73,14 +83,17 @@ app.UseCors("AllowReact");
 // ==========================================
 // 💡 CONFIGURACIÓN PARA SERVIR LAS IMÁGENES
 // ==========================================
-// 1. Esto permite servir archivos estáticos estándar (como wwwroot si existiera)
+var imagenesPath = Path.Combine(builder.Environment.ContentRootPath, "Imagenes");
+if (!Directory.Exists(imagenesPath))
+{
+    Directory.CreateDirectory(imagenesPath);
+}
+
 app.UseStaticFiles();
 
-// 2. Esto expone tu carpeta física "Imagenes" bajo la ruta web "/Imagenes"
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = new PhysicalFileProvider(
-        Path.Combine(builder.Environment.ContentRootPath, "Imagenes")),
+    FileProvider = new PhysicalFileProvider(imagenesPath),
     RequestPath = "/Imagenes"
 });
 // ==========================================
