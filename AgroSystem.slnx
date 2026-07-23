@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="AgroSystemClient/AgroSystemClient.esproj">
+    <Build />
+    <Deploy />
+  </Project>
+  <Project Path="AgroSystemServer/AgroSystemServer.csproj" Id="77d46325-97af-4676-97a9-46c421857d08" />
+</Solution>
